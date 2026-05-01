@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Galaxia de Amor</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #f5c842;
+    --rose: #ff6b9d;
+    --soft-pink: #ffb3d1;
+    --deep-purple: #0a0015;
+    --mid-purple: #120028;
+    --nebula-blue: #1a0a3a;
+    --star-white: #fff8f0;
+    --glow-pink: rgba(255,107,157,0.4);
+    --glow-gold: rgba(245,200,66,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--deep-purple);
+    font-family: 'Cormorant Garamond', serif;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ── CANVAS DE ESTRELLAS ── */
+  #starfield {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ── CORAZONES FLOTANTES ── */
+  .floating-hearts {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+  }
+  .heart {
+    position: absolute;
+    bottom: -40px;
+    font-size: 14px;
+    animation: floatHeart linear infinite;
+    opacity: 0;
+    filter: drop-shadow(0 0 6px var(--rose));
+  }
+  @keyframes floatHeart {
+    0%   { opacity: 0; transform: translateY(0) scale(0.8) rotate(-10deg); }
+    10%  { opacity: 0.8; }
+    90%  { opacity: 0.6; }
+    100% { opacity: 0; transform: translateY(-110vh) scale(1.2) rotate(10deg); }
+  }
+
+  /* ── PANTALLA DE INTRO ── */
+  #intro {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #1a0033 0%, #000008 100%);
+    transition: opacity 1.5s ease, visibility 1.5s;
+  }
+  #intro.hidden { opacity: 0; visibility: hidden; }
+
+  .intro-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.6rem, 5vw, 3.2rem);
+    color: var(--star-white);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    text-align: center;
+    text-shadow: 0 0 40px var(--rose), 0 0 80px var(--rose);
+    animation: pulseTitle 2.5s ease-in-out infinite;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+  }
+  @keyframes pulseTitle {
+    0%,100% { text-shadow: 0 0 40px var(--rose), 0 0 80px var(--rose); }
+    50% { text-shadow: 0 0 60px #ff9ec8, 0 0 120px var(--rose), 0 0 160px #ff3d7f; }
+  }
+
+  .intro-sub {
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    color: var(--soft-pink);
+    letter-spacing: 0.15em;
+    font-style: italic;
+    margin-bottom: 3rem;
+    text-align: center;
+    padding: 0 1rem;
+  }
+
+  .start-btn {
+    background: transparent;
+    border: 1px solid var(--rose);
+    color: var(--rose);
+    padding: 1rem 3rem;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: all 0.4s;
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+  }
+  .start-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--rose);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+    z-index: -1;
+  }
+  .start-btn:hover::before { transform: scaleX(1); }
+  .start-btn:hover { color: var(--deep-purple); box-shadow: 0 0 30px var(--glow-pink); }
+
+  /* ── MAIN GALAXY VIEW ── */
+  #galaxy {
+    position: relative;
+    min-height: 100vh;
+    z-index: 2;
+    display: none;
+  }
+  #galaxy.visible { display: block; }
+
+  /* Nebula layers */
+  .nebula {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .nebula-1 { width: 600px; height: 400px; background: radial-gradient(ellipse, rgba(120,0,180,0.25), transparent 70%); top: 10%; left: -10%; animation: driftNebula 20s ease-in-out infinite; }
+  .nebula-2 { width: 500px; height: 500px; background: radial-gradient(ellipse, rgba(255,50,120,0.15), transparent 70%); top: 40%; right: -5%; animation: driftNebula 25s ease-in-out infinite reverse; }
+  .nebula-3 { width: 700px; height: 300px; background: radial-gradient(ellipse, rgba(0,80,200,0.2), transparent 70%); bottom: 20%; left: 20%; animation: driftNebula 18s ease-in-out infinite 5s; }
+  @keyframes driftNebula {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(30px,-20px) scale(1.05); }
+    66% { transform: translate(-20px,30px) scale(0.95); }
+  }
+
+  /* ── CONSTELLATIONS ── */
+  .section {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    padding: 4rem 2rem;
+  }
+
+  .constellation-zone {
+    max-width: 700px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+  }
+
+  /* SVG constellation lines */
+  .constellation-svg {
+    width: 100%;
+    max-width: 400px;
+    height: 200px;
+    display: block;
+    margin: 0 auto 2rem;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+  .constellation-svg.revealed { opacity: 1; }
+  .const-line {
+    stroke: rgba(255,180,210,0.5);
+    stroke-width: 1;
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+    transition: stroke-dashoffset 2s ease;
+  }
+  .constellation-svg.revealed .const-line { stroke-dashoffset: 0; }
+  .const-star {
+    fill: var(--star-white);
+    filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 8px var(--soft-pink));
+    animation: twinkle 2s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: 1; r: 3; }
+    50% { opacity: 0.5; r: 2; }
+  }
+
+  /* Tap hint */
+  .tap-hint {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    color: rgba(255,180,210,0.6);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    animation: breathe 2s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%,100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* Message card */
+  .message-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,107,157,0.2);
+    border-radius: 2px;
+    padding: 2.5rem 3rem;
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1.2s ease 0.5s, transform 1.2s ease 0.5s;
+    position: relative;
+    overflow: hidden;
+  }
+  .message-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--rose), transparent);
+  }
+  .message-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .message-card.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .msg-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    display: block;
+  }
+
+  .msg-text {
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    color: var(--star-white);
+    line-height: 1.9;
+    font-weight: 300;
+    font-style: italic;
+  }
+
+  .msg-hearts {
+    margin-top: 1.2rem;
+    font-size: 1rem;
+    letter-spacing: 0.3em;
+    color: var(--rose);
+    filter: drop-shadow(0 0 6px var(--rose));
+  }
+
+  /* Section number */
+  .section-number {
+    font-family: 'Cinzel', serif;
+    font-size: 5rem;
+    font-weight: 600;
+    color: rgba(255,107,157,0.06);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    letter-spacing: 0.1em;
+    user-select: none;
+  }
+
+  /* ── FINAL SECTION ── */
+  #final-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .final-card {
+    max-width: 650px;
+    text-align: center;
+    position: relative;
+  }
+
+  .final-crown {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    filter: drop-shadow(0 0 20px var(--gold));
+    animation: crownGlow 3s ease-in-out infinite;
+  }
+  @keyframes crownGlow {
+    0%,100% { filter: drop-shadow(0 0 20px var(--gold)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 40px var(--gold)) drop-shadow(0 0 60px #fff); transform: scale(1.05); }
+  }
+
+  .final-message {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,107,157,0.08) 50%, rgba(255,255,255,0.03) 100%);
+    border: 1px solid rgba(245,200,66,0.3);
+    padding: 3rem 3.5rem;
+    position: relative;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: all 1.5s ease;
+  }
+  .final-message.revealed {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 80px rgba(255,107,157,0.15), 0 0 160px rgba(245,200,66,0.08);
+  }
+  .final-message::before, .final-message::after {
+    content: '✦';
+    position: absolute;
+    color: var(--gold);
+    font-size: 0.8rem;
+    opacity: 0.6;
+  }
+  .final-message::before { top: 1rem; left: 1rem; }
+  .final-message::after { bottom: 1rem; right: 1rem; }
+
+  .final-quote {
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    color: var(--star-white);
+    line-height: 2;
+    font-weight: 300;
+    font-style: italic;
+    text-shadow: 0 0 30px rgba(255,255,255,0.3);
+  }
+
+  .final-quote em {
+    color: var(--gold);
+    font-style: normal;
+    text-shadow: 0 0 20px var(--gold);
+  }
+
+  /* Music player */
+  #music-player {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 200;
+    display: none;
+  }
+  #music-player.visible { display: block; }
+
+  .player-card {
+    background: rgba(10,0,21,0.85);
+    border: 1px solid rgba(255,107,157,0.3);
+    border-radius: 2px;
+    padding: 1rem 1.5rem;
+    backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 0 30px rgba(255,107,157,0.1);
+    max-width: 280px;
+  }
+
+  .player-info { flex: 1; min-width: 0; }
+  .player-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+  }
+  .player-song {
+    font-size: 0.85rem;
+    color: var(--star-white);
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .player-artist {
+    font-size: 0.75rem;
+    color: rgba(255,180,210,0.7);
+    margin-top: 0.15rem;
+  }
+
+  .play-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--rose);
+    background: transparent;
+    color: var(--rose);
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+  .play-btn:hover { background: var(--rose); color: var(--deep-purple); }
+
+  .wave-bars {
+    display: flex; align-items: center; gap: 2px; height: 20px;
+  }
+  .wave-bar {
+    width: 2px;
+    background: var(--rose);
+    border-radius: 2px;
+    animation: waveAnim 0.8s ease-in-out infinite;
+  }
+  .wave-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+  .wave-bar:nth-child(2) { height: 14px; animation-delay: 0.15s; }
+  .wave-bar:nth-child(3) { height: 10px; animation-delay: 0.3s; }
+  .wave-bar:nth-child(4) { height: 16px; animation-delay: 0.1s; }
+  .wave-bar:nth-child(5) { height: 6px; animation-delay: 0.25s; }
+  @keyframes waveAnim {
+    0%,100% { transform: scaleY(0.5); opacity: 0.5; }
+    50% { transform: scaleY(1); opacity: 1; }
+  }
+  .wave-bars.paused .wave-bar { animation-play-state: paused; }
+
+  /* Scroll indicator */
+  .scroll-down {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255,180,210,0.5);
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-family: 'Cinzel', serif;
+    animation: fadeUpDown 2s ease-in-out infinite;
+    cursor: pointer;
+    z-index: 3;
+  }
+  .scroll-down svg { width: 20px; opacity: 0.5; }
+  @keyframes fadeUpDown {
+    0%,100% { opacity: 0.4; transform: translateX(-50%) translateY(0); }
+    50% { opacity: 1; transform: translateX(-50%) translateY(6px); }
+  }
+
+  /* Sparkle cursor trail */
+  .sparkle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--rose);
+    animation: sparkleAnim 0.8s forwards;
+  }
+  @keyframes sparkleAnim {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0) translateY(-20px); }
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .message-card { padding: 1.8rem 1.5rem; }
+    .final-message { padding: 2rem 1.5rem; }
+    #music-player { right: 1rem; bottom: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<!-- Floating Hearts -->
+<div class="floating-hearts" id="hearts"></div>
+
+<!-- Intro Screen -->
+<div id="intro">
+  <div class="intro-title">Para Ti,<br>Mi Universo</div>
+  <div class="intro-sub">Un mensaje escrito entre estrellas...</div>
+  <button class="start-btn" onclick="startJourney()">✦ Explorar ✦</button>
+</div>
+
+<!-- Galaxy Main -->
+<div id="galaxy">
+  <div class="nebula nebula-1"></div>
+  <div class="nebula nebula-2"></div>
+  <div class="nebula nebula-3"></div>
+
+  <!-- SECTION 1 -->
+  <div class="section" id="s1">
+    <div class="section-number">I</div>
+    <div class="constellation-zone">
+      <div class="tap-hint">✦ toca la constelación ✦</div>
+      <svg class="constellation-svg" id="svg1" viewBox="0 0 400 180" onclick="revealSection(1)">
+        <line class="const-line" x1="60" y1="140" x2="130" y2="80"/>
+        <line class="const-line" x1="130" y1="80" x2="200" y2="50"/>
+        <line class="const-line" x1="200" y1="50" x2="280" y2="90"/>
+        <line class="const-line" x1="280" y1="90" x2="340" y2="140"/>
+        <line class="const-line" x1="200" y1="50" x2="160" y2="140"/>
+        <circle class="const-star" cx="60" cy="140" r="4" style="animation-delay:0s"/>
+        <circle class="const-star" cx="130" cy="80" r="5" style="animation-delay:0.3s"/>
+        <circle class="const-star" cx="200" cy="50" r="6" style="animation-delay:0.6s"/>
+        <circle class="const-star" cx="280" cy="90" r="4" style="animation-delay:0.2s"/>
+        <circle class="const-star" cx="340" cy="140" r="3" style="animation-delay:0.8s"/>
+        <circle class="const-star" cx="160" cy="140" r="4" style="animation-delay:0.4s"/>
+        <!-- Tiny decorative stars -->
+        <circle cx="100" cy="30" r="1.5" fill="rgba(255,255,255,0.4)" style="animation: twinkle 1.5s ease-in-out infinite;"/>
+        <circle cx="320" cy="40" r="1" fill="rgba(255,180,210,0.6)" style="animation: twinkle 2s ease-in-out infinite 0.5s;"/>
+        <circle cx="370" cy="100" r="1.5" fill="rgba(255,255,255,0.3)" style="animation: twinkle 1.8s ease-in-out infinite 1s;"/>
+      </svg>
+      <div class="message-card" id="msg1">
+        <span class="msg-label">✦ constelación del primer encuentro ✦</span>
+        <p class="msg-text">En el momento en que apareciste, algo en el universo se acomodó.<br>Como si cada estrella hubiera estado esperando ese instante para brillar diferente.</p>
+        <div class="msg-hearts">♡ ♡ ♡</div>
+      </div>
+    </div>
+    <div class="scroll-down" onclick="document.getElementById('s2').scrollIntoView({behavior:'smooth'})">
+      <span>Seguir</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section" id="s2">
+    <div class="section-number">II</div>
+    <div class="constellation-zone">
+      <div class="tap-hint">✦ toca la constelación ✦</div>
+      <svg class="constellation-svg" id="svg2" viewBox="0 0 400 180" onclick="revealSection(2)">
+        <line class="const-line" x1="80" y1="100" x2="160" y2="40"/>
+        <line class="const-line" x1="160" y1="40" x2="240" y2="40"/>
+        <line class="const-line" x1="240" y1="40" x2="320" y2="100"/>
+        <line class="const-line" x1="80" y1="100" x2="200" y2="160"/>
+        <line class="const-line" x1="320" y1="100" x2="200" y2="160"/>
+        <circle class="const-star" cx="80" cy="100" r="4" style="animation-delay:0.1s"/>
+        <circle class="const-star" cx="160" cy="40" r="6" style="animation-delay:0.4s"/>
+        <circle class="const-star" cx="240" cy="40" r="5" style="animation-delay:0s"/>
+        <circle class="const-star" cx="320" cy="100" r="4" style="animation-delay:0.7s"/>
+        <circle class="const-star" cx="200" cy="160" r="6" style="animation-delay:0.3s"/>
+        <circle cx="50" cy="50" r="1.5" fill="rgba(255,200,210,0.5)" style="animation: twinkle 2s ease-in-out infinite;"/>
+        <circle cx="350" cy="60" r="1" fill="rgba(255,255,255,0.4)" style="animation: twinkle 1.6s ease-in-out infinite 0.5s;"/>
+      </svg>
+      <div class="message-card" id="msg2">
+        <span class="msg-label">✦ constelación de la calma ✦</span>
+        <p class="msg-text">Contigo aprendí que el amor verdadero no grita.<br>Llega suave, como la luz que entra por la ventana al amanecer,<br>y lo llena todo sin que te des cuenta.</p>
+        <div class="msg-hearts">♡ ♡ ♡</div>
+      </div>
+    </div>
+    <div class="scroll-down" onclick="document.getElementById('s3').scrollIntoView({behavior:'smooth'})">
+      <span>Seguir</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="section" id="s3">
+    <div class="section-number">III</div>
+    <div class="constellation-zone">
+      <div class="tap-hint">✦ toca la constelación ✦</div>
+      <svg class="constellation-svg" id="svg3" viewBox="0 0 400 180" onclick="revealSection(3)">
+        <line class="const-line" x1="200" y1="20" x2="300" y2="80"/>
+        <line class="const-line" x1="300" y1="80" x2="260" y2="160"/>
+        <line class="const-line" x1="260" y1="160" x2="140" y2="160"/>
+        <line class="const-line" x1="140" y1="160" x2="100" y2="80"/>
+        <line class="const-line" x1="100" y1="80" x2="200" y2="20"/>
+        <line class="const-line" x1="200" y1="20" x2="200" y2="100"/>
+        <circle class="const-star" cx="200" cy="20" r="7" style="animation-delay:0s"/>
+        <circle class="const-star" cx="300" cy="80" r="4" style="animation-delay:0.2s"/>
+        <circle class="const-star" cx="260" cy="160" r="4" style="animation-delay:0.5s"/>
+        <circle class="const-star" cx="140" cy="160" r="4" style="animation-delay:0.3s"/>
+        <circle class="const-star" cx="100" cy="80" r="5" style="animation-delay:0.7s"/>
+        <circle class="const-star" cx="200" cy="100" r="3" style="animation-delay:0.4s"/>
+      </svg>
+      <div class="message-card" id="msg3">
+        <span class="msg-label">✦ constelación del corazón ✦</span>
+        <p class="msg-text">Me enamoré de tu forma de reír,<br>de cómo tus ojos cuentan todo lo que las palabras no alcanzan.<br>Eres mi lugar favorito en este mundo.</p>
+        <div class="msg-hearts">♡ ♡ ♡</div>
+      </div>
+    </div>
+    <div class="scroll-down" onclick="document.getElementById('s4').scrollIntoView({behavior:'smooth'})">
+      <span>Seguir</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="section" id="s4">
+    <div class="section-number">IV</div>
+    <div class="constellation-zone">
+      <div class="tap-hint">✦ toca la constelación ✦</div>
+      <svg class="constellation-svg" id="svg4" viewBox="0 0 400 180" onclick="revealSection(4)">
+        <line class="const-line" x1="70" y1="150" x2="130" y2="60"/>
+        <line class="const-line" x1="130" y1="60" x2="200" y2="30"/>
+        <line class="const-line" x1="200" y1="30" x2="270" y2="60"/>
+        <line class="const-line" x1="270" y1="60" x2="330" y2="150"/>
+        <line class="const-line" x1="130" y1="60" x2="270" y2="60"/>
+        <line class="const-line" x1="200" y1="30" x2="200" y2="150"/>
+        <circle class="const-star" cx="70" cy="150" r="3" style="animation-delay:0.6s"/>
+        <circle class="const-star" cx="130" cy="60" r="5" style="animation-delay:0.1s"/>
+        <circle class="const-star" cx="200" cy="30" r="7" style="animation-delay:0s"/>
+        <circle class="const-star" cx="270" cy="60" r="5" style="animation-delay:0.3s"/>
+        <circle class="const-star" cx="330" cy="150" r="3" style="animation-delay:0.8s"/>
+        <circle class="const-star" cx="200" cy="150" r="4" style="animation-delay:0.5s"/>
+      </svg>
+      <div class="message-card" id="msg4">
+        <span class="msg-label">✦ constelación de la eternidad ✦</span>
+        <p class="msg-text">Si tuviera que elegir una vida entre millones de universos posibles,<br>en cada uno te volvería a encontrar.<br>Porque mi alma ya reconoce a la tuya.</p>
+        <div class="msg-hearts">♡ ♡ ♡</div>
+      </div>
+    </div>
+    <div class="scroll-down" onclick="document.getElementById('final-section').scrollIntoView({behavior:'smooth'})">
+      <span>El mensaje final</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
+  </div>
+
+  <!-- FINAL SECTION -->
+  <div id="final-section" class="section">
+    <div class="final-card">
+      <div class="final-crown" id="finalCrown" style="opacity:0">✦ ♡ ✦</div>
+      <div class="final-message" id="finalMsg">
+        <p class="final-quote">
+          Oré por un amor que viniera de Dios,<br>
+          y <em>Él me condujo a ti.</em>
+        </p>
+        <div class="msg-hearts" style="margin-top:2rem; font-size:1.3rem; letter-spacing:0.5em;">♡ ♡ ♡ ♡ ♡</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Music Player -->
+<div id="music-player">
+  <div class="player-card">
+    <div class="player-info">
+      <div class="player-title">♪ Sonando ahora</div>
+      <div class="player-song">Ordinary</div>
+      <div class="player-artist">Alex Warren</div>
+    </div>
+    <div class="wave-bars paused" id="waveBars">
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+    <button class="play-btn" id="playBtn" onclick="toggleMusic()">▶</button>
+  </div>
+</div>
+
+<!-- Hidden audio (user must provide their own file or use YouTube) -->
+<audio id="bgMusic" loop>
+   <source src="Alex Warren - Ordinary (Sub. Español + Lyrics) - sweetblue..mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// ── STARFIELD ──
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let stars = [];
+let W, H;
+
+function resizeCanvas() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 280; i++) {
+    stars.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.8 + 0.2,
+      alpha: Math.random(),
+      speed: Math.random() * 0.4 + 0.1,
+      twinkleSpeed: Math.random() * 0.02 + 0.005,
+      color: Math.random() > 0.85 ? '#ffb3d1' : Math.random() > 0.7 ? '#f5c842' : '#fff8f0'
+    });
+  }
+}
+
+function drawStars() {
+  ctx.clearRect(0, 0, W, H);
+  stars.forEach(s => {
+    s.alpha += s.twinkleSpeed * (Math.random() > 0.5 ? 1 : -1);
+    s.alpha = Math.max(0.1, Math.min(1, s.alpha));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = s.color;
+    ctx.globalAlpha = s.alpha;
+    ctx.fill();
+    // Glow
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r * 2.5, 0, Math.PI * 2);
+    const grd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 2.5);
+    grd.addColorStop(0, s.color.replace(')', ', 0.3)').replace('rgb', 'rgba'));
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.globalAlpha = s.alpha * 0.4;
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(drawStars);
+}
+
+window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
+resizeCanvas();
+initStars();
+drawStars();
+
+// ── FLOATING HEARTS ──
+const heartsContainer = document.getElementById('hearts');
+const heartSymbols = ['♡', '♥', '❤', '💕', '✦'];
+
+function spawnHeart() {
+  const heart = document.createElement('div');
+  heart.className = 'heart';
+  heart.textContent = heartSymbols[Math.floor(Math.random() * heartSymbols.length)];
+  heart.style.left = Math.random() * 100 + 'vw';
+  heart.style.animationDuration = (Math.random() * 8 + 7) + 's';
+  heart.style.animationDelay = Math.random() * 3 + 's';
+  heart.style.fontSize = (Math.random() * 10 + 8) + 'px';
+  heart.style.color = Math.random() > 0.5 ? '#ff6b9d' : '#f5c842';
+  heartsContainer.appendChild(heart);
+  setTimeout(() => heart.remove(), 15000);
+}
+
+setInterval(spawnHeart, 700);
+
+// ── CURSOR SPARKLE ──
+document.addEventListener('mousemove', e => {
+  if (Math.random() > 0.85) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.style.left = e.clientX - 3 + 'px';
+    s.style.top = e.clientY - 3 + 'px';
+    s.style.background = Math.random() > 0.5 ? '#ff6b9d' : '#f5c842';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 800);
+  }
+});
+
+// ── INTRO ──
+function startJourney() {
+  document.getElementById('intro').classList.add('hidden');
+  const galaxy = document.getElementById('galaxy');
+  galaxy.classList.add('visible');
+  document.getElementById('music-player').classList.add('visible');
+  // Auto-reveal first constellation
+  setTimeout(() => {
+    document.getElementById('svg1').classList.add('revealed');
+  }, 800);
+  // Try autoplay
+  setTimeout(() => {
+    const audio = document.getElementById('bgMusic');
+    if (audio.src || audio.querySelector('source')) {
+      audio.play().then(() => {
+        document.getElementById('waveBars').classList.remove('paused');
+        document.getElementById('playBtn').textContent = '⏸';
+      }).catch(() => {});
+    }
+  }, 500);
+}
+
+// ── SECTION REVEAL ──
+const revealed = new Set();
+
+function revealSection(n) {
+  if (revealed.has(n)) return;
+  revealed.add(n);
+  const svg = document.getElementById('svg' + n);
+  const msg = document.getElementById('msg' + n);
+  svg.classList.add('revealed');
+  msg.classList.add('revealed');
+  // Spawn extra hearts
+  for (let i = 0; i < 5; i++) setTimeout(spawnHeart, i * 200);
+}
+
+// ── INTERSECTION OBSERVER for auto-reveal ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const id = entry.target.id;
+    if (id === 's1') setTimeout(() => revealSection(1), 400);
+    if (id === 's2') setTimeout(() => revealSection(2), 400);
+    if (id === 's3') setTimeout(() => revealSection(3), 400);
+    if (id === 's4') setTimeout(() => revealSection(4), 400);
+    if (id === 'final-section') {
+      setTimeout(() => {
+        const crown = document.getElementById('finalCrown');
+        const msg = document.getElementById('finalMsg');
+        crown.style.transition = 'opacity 1s ease';
+        crown.style.opacity = '1';
+        msg.classList.add('revealed');
+        // Big heart burst
+        for (let i = 0; i < 15; i++) setTimeout(spawnHeart, i * 150);
+      }, 600);
+    }
+  });
+}, { threshold: 0.4 });
+
+['s1','s2','s3','s4','final-section'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) observer.observe(el);
+});
+
+// ── MUSIC ──
+let isPlaying = false;
+function toggleMusic() {
+  const audio = document.getElementById('bgMusic');
+  const btn = document.getElementById('playBtn');
+  const waves = document.getElementById('waveBars');
+  if (!audio.src && !audio.querySelector('source')) {
+    // Open YouTube as fallback
+    window.open('https://www.youtube.com/results?search_query=Ordinary+Alex+Warren', '_blank');
+    return;
+  }
+  if (isPlaying) {
+    audio.pause();
+    btn.textContent = '▶';
+    waves.classList.add('paused');
+    isPlaying = false;
+  } else {
+    audio.play();
+    btn.textContent = '⏸';
+    waves.classList.remove('paused');
+    isPlaying = true;
+  }
+}
+</script>
+</body>
+</html>
