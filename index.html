@@ -844,6 +844,19 @@ function toggleMusic() {
     isPlaying = true;
   }
 }
+
+// 🔥 FIX AUDIO PARA CELULAR
+document.addEventListener("click", function () {
+  const audio = document.getElementById("bgMusic");
+
+  if (!isPlaying) {
+    audio.play().then(() => {
+      document.getElementById('waveBars').classList.remove('paused');
+      document.getElementById('playBtn').textContent = '⏸';
+      isPlaying = true;
+    }).catch(() => {});
+  }
+}, { once: true });
 </script>
 </body>
 </html>
